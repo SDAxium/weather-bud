@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'Services/services.dart' as services;
+
+/// The current position of the device. 
+Position? currentPosition;
 
 void main() {
   runApp(const MyApp());
@@ -15,12 +20,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         // This is the theme of your application.
         //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
+        // r - hot reload
+        // R - hot restart
         //
         // Notice that the counter didn't reset back to zero; the application
         // state is not lost during the reload. To reset the state, use hot
@@ -28,9 +29,9 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Weather Bud Home'),
     );
   }
 }
@@ -54,17 +55,43 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  String message = 'No Location Available';
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  /// Mamadou Memo: All this does is get the current location of the device. I ended up fighting it for a lot
+  /// longer than I should have because I had location permissions off for everything on my laptop.
+  /// I don't know when I did that. Other apps still got my location fine. It's ok. Time for the next part.
+  Future<void> _getCurrentPosition() async {
+    try {
+      bool locationEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!locationEnabled) {
+        message = "Location Service Disabled";
+        return;
+      } else {
+        message = "Location Service Enabled";
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        message = "Permission denied. Requesting Permission";
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          message = "Permission still denied.";
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        message = "Permission denied forever";
+        Future.delayed(
+          const Duration(milliseconds: 1500),
+          () => Geolocator.openAppSettings(),
+        );
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition();
+      message = "Lat: ${position.latitude} / Long: ${position.longitude}";
+    } finally {
+      setState(() {});
+    }
   }
 
   @override
@@ -104,16 +131,13 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            const Text('Your current location is:'),
+            Text(message, style: Theme.of(context).textTheme.headlineMedium),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: _getCurrentPosition,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
