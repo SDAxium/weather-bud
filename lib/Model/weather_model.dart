@@ -28,7 +28,7 @@ class WeatherData {
     humidity: json['main']['humidity'],
     wind: Wind.fromJson(json['wind']),
     maxTemperature: json['main']['temp_max'], // Original had a conversion but you can just change units in the request
-    minTemperature: json['main']['temp_min'], // Original had a conversion but you can just change units in the request, 
+    minTemperature: json['main']['temp_min'], // Original had a conversion but you can just change units in the request
     pressure: json['main']['pressure'], 
     seaLevel: json['main']['sea_level'] ?? 0, 
     weather: List<WeatherInfo>.from(

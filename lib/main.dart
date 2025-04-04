@@ -1,11 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'Services/services.dart' as services;
+import 'services/services.dart' as services;
+import 'package:window_manager/window_manager.dart';
+import 'screens/home_screen.dart' as home;
 
 /// The current position of the device. 
 Position? currentPosition;
+String? longLat;
 
-void main() {
+/// Units for temperature
+String unit = "F";
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
+
+  WindowOptions windowOptions = const WindowOptions(
+    size: Size(300, 300),
+    center: true,
+    title: 'Weather Bud',
+    titleBarStyle: TitleBarStyle.hidden,
+    windowButtonVisibility: false,
+    alwaysOnTop: true,
+  );
+  
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+
+    await windowManager.setAlignment(
+      Alignment.bottomRight,
+      animate: true,
+    );
+    windowManager.setResizable(false);
+  });
+  
+  longLat = await services.getCurrentPosition();
+  //home.HomeScreenState().currentLocationWeather();
   runApp(const MyApp());
 }
 
@@ -16,131 +47,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Weather Bud',
+      home: const home.HomeScreen(title: 'Weather Bud Home'),
       theme: ThemeData(
         // This is the theme of your application.
         //
         // r - hot reload
         // R - hot restart
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(title: 'Weather Bud Home'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  String message = 'No Location Available';
-
-  /// Mamadou Memo: All this does is get the current location of the device. I ended up fighting it for a lot
-  /// longer than I should have because I had location permissions off for everything on my laptop.
-  /// I don't know when I did that. Other apps still got my location fine. It's ok. Time for the next part.
-  Future<void> _getCurrentPosition() async {
-    try {
-      bool locationEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!locationEnabled) {
-        message = "Location Service Disabled";
-        return;
-      } else {
-        message = "Location Service Enabled";
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        message = "Permission denied. Requesting Permission";
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          message = "Permission still denied.";
-          return;
-        }
-      }
-      if (permission == LocationPermission.deniedForever) {
-        message = "Permission denied forever";
-        Future.delayed(
-          const Duration(milliseconds: 1500),
-          () => Geolocator.openAppSettings(),
-        );
-        return;
-      }
-      final position = await Geolocator.getCurrentPosition();
-      message = "Lat: ${position.latitude} / Long: ${position.longitude}";
-    } finally {
-      setState(() {});
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('Your current location is:'),
-            Text(message, style: Theme.of(context).textTheme.headlineMedium),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _getCurrentPosition,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
