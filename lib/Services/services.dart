@@ -9,7 +9,6 @@ import 'package:geolocator/geolocator.dart';
 class WeatherServices {
   String link = "https://api.openweathermap.org/data/2.5/weather?lon=${main.currentPosition?.longitude}&lat=${main.currentPosition?.latitude}&appid=${creds.openWeatherKey}&units=imperial";
   fetchWeather() async {
-    print(link);
     final response = await http.get(
       Uri.parse(
         // Mamadou Memo: The tutorial I was following hard coded in the location, had the api key in the link and instead of having the api return in chosen units, converted
@@ -25,7 +24,7 @@ class WeatherServices {
         throw Exception('Failed to load weather data');
       }
     } catch (e) {
-      print(e.toString());
+      //print(e.toString());
     }
   }
 }
@@ -55,4 +54,9 @@ Future<String> getCurrentPosition() async {
   final position = await Geolocator.getCurrentPosition();
   main.currentPosition = position;
   return "${position.latitude} / ${position.longitude}";
+}
+
+String getLongLat() {
+  if(main.currentPosition == null) getCurrentPosition();
+  return "${main.currentPosition!.latitude} / ${main.currentPosition!.longitude}";
 }
